@@ -3,7 +3,9 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-app.use(cors({ origin: '*' }));
+app.use(cors({
+  origin: ['https://ai-triage-app.vercel.app', 'http://localhost:5173']
+}));
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
@@ -145,21 +147,3 @@ ${userContext ? `PATIENT CONTEXT: ${userContext}` : ''}`
 app.listen(PORT, () => {
   console.log(`🚀 Backend running at http://localhost:${PORT}`)
 })
-```
-
-Press `Ctrl+S`
-
----
-
-Now push to GitHub in Git Bash:
-```
-cd /c/Users/achyu/OneDrive/Desktop/ai-triage-system/backend/ai-triage-app
-```
-```
-git add .
-```
-```
-git commit -m "Remove MongoDB use clean backend"
-```
-```
-git push origin master
