@@ -104,7 +104,7 @@ export default function Chat() {
 
     try {
       const cleanMessages = getCleanMessages(newMessages)
-      const res = await fetch('http://localhost:5000/api/chat', {
+      const res = await fetch('https://ai-triage-app.onrender.com/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -158,7 +158,7 @@ export default function Chat() {
     setLoading(true)
 
     try {
-      const dbRes = await fetch('http://localhost:5000/api/medications', {
+      const dbRes = await fetch('https://ai-triage-app.onrender.com/api/medications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ medications: medList })
@@ -166,7 +166,7 @@ export default function Chat() {
       const dbData = await dbRes.json()
 
       const cleanMessages = getCleanMessages(newMessages)
-      const aiRes = await fetch('http://localhost:5000/api/chat', {
+      const aiRes = await fetch('https://ai-triage-app.onrender.com/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: cleanMessages })
