@@ -3,60 +3,50 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-// ============================================
-// MEDICATION SAFETY DATABASE
-// ============================================
 const DRUG_INTERACTIONS = [
   { drugs: ['aspirin', 'warfarin'], severity: 'SEVERE', risk: 'HIGH bleeding risk — these two together can cause dangerous internal bleeding' },
-  { drugs: ['aspirin', 'clopidogrel'], severity: 'SEVERE', risk: 'Double blood thinning — very high bleeding risk, only use if doctor prescribed both' },
-  { drugs: ['metformin', 'alcohol'], severity: 'SEVERE', risk: 'Can cause lactic acidosis — a dangerous condition. Avoid alcohol completely with metformin' },
+  { drugs: ['aspirin', 'clopidogrel'], severity: 'SEVERE', risk: 'Double blood thinning — very high bleeding risk' },
+  { drugs: ['metformin', 'alcohol'], severity: 'SEVERE', risk: 'Can cause lactic acidosis — a dangerous condition' },
   { drugs: ['warfarin', 'ibuprofen'], severity: 'SEVERE', risk: 'Ibuprofen increases warfarin effect — serious bleeding risk' },
-  { drugs: ['warfarin', 'paracetamol'], severity: 'MODERATE', risk: 'High doses of paracetamol increase warfarin effect — monitor carefully' },
-  { drugs: ['aspirin', 'ibuprofen'], severity: 'MODERATE', risk: 'Both are NSAIDs — taking together increases stomach ulcer and bleeding risk' },
+  { drugs: ['warfarin', 'paracetamol'], severity: 'MODERATE', risk: 'High doses of paracetamol increase warfarin effect' },
+  { drugs: ['aspirin', 'ibuprofen'], severity: 'MODERATE', risk: 'Both are NSAIDs — increases stomach ulcer and bleeding risk' },
   { drugs: ['metformin', 'ibuprofen'], severity: 'MODERATE', risk: 'Ibuprofen can reduce kidney function and affect metformin levels' },
-  { drugs: ['atenolol', 'amlodipine'], severity: 'MILD', risk: 'Both lower blood pressure — monitor for dizziness or very low BP' },
+  { drugs: ['atenolol', 'amlodipine'], severity: 'MILD', risk: 'Both lower blood pressure — monitor for dizziness' },
   { drugs: ['pantoprazole', 'clopidogrel'], severity: 'MODERATE', risk: 'Pantoprazole may reduce effectiveness of clopidogrel' },
-  { drugs: ['atorvastatin', 'amlodipine'], severity: 'MILD', risk: 'Amlodipine can slightly increase atorvastatin levels — monitor for muscle pain' },
-  { drugs: ['methotrexate', 'aspirin'], severity: 'SEVERE', risk: 'Aspirin can increase methotrexate toxicity — very dangerous combination' },
+  { drugs: ['atorvastatin', 'amlodipine'], severity: 'MILD', risk: 'Amlodipine can slightly increase atorvastatin levels' },
+  { drugs: ['methotrexate', 'aspirin'], severity: 'SEVERE', risk: 'Aspirin can increase methotrexate toxicity — very dangerous' },
   { drugs: ['methotrexate', 'ibuprofen'], severity: 'SEVERE', risk: 'NSAIDs increase methotrexate toxicity — can be life threatening' },
-  { drugs: ['paracetamol', 'dolo'], severity: 'SEVERE', risk: 'Paracetamol and Dolo 650 are the same drug — taking both causes overdose risk' },
-  { drugs: ['aspirin', 'naproxen'], severity: 'MODERATE', risk: 'Two NSAIDs together — increased stomach bleeding and ulcer risk' },
-  { drugs: ['ciprofloxacin', 'antacid'], severity: 'MODERATE', risk: 'Antacids reduce ciprofloxacin absorption — take them 2 hours apart' },
-  { drugs: ['warfarin', 'omeprazole'], severity: 'MODERATE', risk: 'Omeprazole can increase warfarin levels — monitor INR closely' },
+  { drugs: ['paracetamol', 'dolo'], severity: 'SEVERE', risk: 'Paracetamol and Dolo 650 are the same drug — overdose risk' },
+  { drugs: ['aspirin', 'naproxen'], severity: 'MODERATE', risk: 'Two NSAIDs together — increased stomach bleeding risk' },
+  { drugs: ['ciprofloxacin', 'antacid'], severity: 'MODERATE', risk: 'Antacids reduce ciprofloxacin absorption' },
+  { drugs: ['warfarin', 'omeprazole'], severity: 'MODERATE', risk: 'Omeprazole can increase warfarin levels' },
   { drugs: ['amlodipine', 'simvastatin'], severity: 'MODERATE', risk: 'Amlodipine increases simvastatin levels — risk of muscle damage' },
 ]
 
 const DUPLICATIONS = [
-  { drugs: ['paracetamol', 'dolo'], message: 'Paracetamol and Dolo 650 contain the same ingredient — taking both is an overdose' },
-  { drugs: ['paracetamol', 'crocin'], message: 'Crocin and Paracetamol are the same drug — do not take both' },
-  { drugs: ['ibuprofen', 'brufen'], message: 'Brufen is just Ibuprofen — same drug, do not double dose' },
-  { drugs: ['aspirin', 'disprin'], message: 'Disprin contains Aspirin — same drug, avoid taking both' },
+  { drugs: ['paracetamol', 'dolo'], message: 'Paracetamol and Dolo 650 contain the same ingredient' },
+  { drugs: ['paracetamol', 'crocin'], message: 'Crocin and Paracetamol are the same drug' },
+  { drugs: ['ibuprofen', 'brufen'], message: 'Brufen is just Ibuprofen — same drug' },
+  { drugs: ['aspirin', 'disprin'], message: 'Disprin contains Aspirin — same drug' },
 ]
 
 function checkMedications(medList) {
   const normalized = medList.map(m => m.toLowerCase().trim())
   const found = []
   const dups = []
-
   DRUG_INTERACTIONS.forEach(interaction => {
-    const match = interaction.drugs.every(drug =>
-      normalized.some(med => med.includes(drug))
-    )
+    const match = interaction.drugs.every(drug => normalized.some(med => med.includes(drug)))
     if (match) found.push(interaction)
   })
-
   DUPLICATIONS.forEach(dup => {
-    const match = dup.drugs.every(drug =>
-      normalized.some(med => med.includes(drug))
-    )
+    const match = dup.drugs.every(drug => normalized.some(med => med.includes(drug)))
     if (match) dups.push(dup)
   })
-
   return { interactions: found, duplications: dups }
 }
 
@@ -64,9 +54,6 @@ app.get('/', (req, res) => {
   res.json({ message: '✅ Backend is running!' })
 })
 
-// ============================================
-// MEDICATION CHECK ROUTE
-// ============================================
 app.post('/api/medications', (req, res) => {
   const { medications } = req.body
   if (!medications || !Array.isArray(medications)) {
@@ -76,9 +63,6 @@ app.post('/api/medications', (req, res) => {
   res.json(result)
 })
 
-// ============================================
-// CHAT ROUTE
-// ============================================
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages, userContext } = req.body
@@ -119,16 +103,15 @@ ADVICE: [what the patient should do]
 - Chest pain + age 50+ + exertion = GO_TO_EMERGENCY
 - Chest pain + young + anxious + no other symptoms = SEE_DOCTOR_TODAY
 - Fever 3+ days + child = SEE_DOCTOR_TODAY
-- Fever + stiff neck + rash = GO_TO_EMERGENCY (possible meningitis)
+- Fever + stiff neck + rash = GO_TO_EMERGENCY
 - Sudden worst headache of life = GO_TO_EMERGENCY
 - Mild cold + no red flags = HOME_CARE
 - Mild fever 1 day + adult + no red flags = HOME_CARE
 
 ### TONE RULES
 - Always warm, calm, never alarmist
-- Simple English only — no medical jargon
-- If jargon needed, explain it immediately
-- Always end with disclaimer: "This is a triage aid, not a diagnosis. Please consult a qualified doctor."
+- Simple English only
+- Always end with: This is a triage aid, not a diagnosis. Consult a qualified doctor.
 - For emergencies mention: Call 108 immediately
 
 ${userContext ? `PATIENT CONTEXT: ${userContext}` : ''}`
@@ -150,10 +133,7 @@ ${userContext ? `PATIENT CONTEXT: ${userContext}` : ''}`
     })
 
     const data = await response.json()
-    if (data.error) {
-      return res.status(400).json({ error: data.error.message })
-    }
-
+    if (data.error) return res.status(400).json({ error: data.error.message })
     res.json({ reply: data.choices[0].message.content })
 
   } catch (error) {
@@ -165,3 +145,21 @@ ${userContext ? `PATIENT CONTEXT: ${userContext}` : ''}`
 app.listen(PORT, () => {
   console.log(`🚀 Backend running at http://localhost:${PORT}`)
 })
+```
+
+Press `Ctrl+S`
+
+---
+
+Now push to GitHub in Git Bash:
+```
+cd /c/Users/achyu/OneDrive/Desktop/ai-triage-system/backend/ai-triage-app
+```
+```
+git add .
+```
+```
+git commit -m "Remove MongoDB use clean backend"
+```
+```
+git push origin master
